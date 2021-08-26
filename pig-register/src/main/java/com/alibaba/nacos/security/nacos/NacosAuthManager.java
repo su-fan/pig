@@ -22,13 +22,13 @@ import com.alibaba.nacos.auth.AuthManager;
 import com.alibaba.nacos.auth.exception.AccessException;
 import com.alibaba.nacos.auth.model.Permission;
 import com.alibaba.nacos.auth.model.User;
+import com.alibaba.nacos.common.utils.StringUtils;
 import com.alibaba.nacos.config.server.auth.RoleInfo;
 import com.alibaba.nacos.config.server.utils.RequestUtil;
+import com.alibaba.nacos.core.utils.Loggers;
 import com.alibaba.nacos.security.nacos.roles.NacosRoleServiceImpl;
 import com.alibaba.nacos.security.nacos.users.NacosUser;
-import com.alibaba.nacos.core.utils.Loggers;
 import io.jsonwebtoken.ExpiredJwtException;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -50,6 +50,10 @@ import java.util.List;
 public class NacosAuthManager implements AuthManager {
 
 	private static final String TOKEN_PREFIX = "Bearer ";
+
+	private static final String PARAM_USERNAME = "username";
+
+	private static final String PARAM_PASSWORD = "password";
 
 	@Autowired
 	private JwtTokenManager tokenManager;
@@ -156,8 +160,8 @@ public class NacosAuthManager implements AuthManager {
 		}
 		bearerToken = request.getParameter(Constants.ACCESS_TOKEN);
 		if (StringUtils.isBlank(bearerToken)) {
-			String userName = request.getParameter("username");
-			String password = request.getParameter("password");
+			String userName = request.getParameter(PARAM_USERNAME);
+			String password = request.getParameter(PARAM_PASSWORD);
 			bearerToken = resolveTokenFromUser(userName, password);
 		}
 
@@ -174,8 +178,8 @@ public class NacosAuthManager implements AuthManager {
 		}
 		bearerToken = request.getHeader(Constants.ACCESS_TOKEN);
 		if (StringUtils.isBlank(bearerToken)) {
-			String userName = request.getHeader("username");
-			String password = request.getHeader("password");
+			String userName = request.getHeader(PARAM_USERNAME);
+			String password = request.getHeader(PARAM_PASSWORD);
 			bearerToken = resolveTokenFromUser(userName, password);
 		}
 

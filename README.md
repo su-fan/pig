@@ -1,5 +1,5 @@
 <p align="center">
- <img src="https://img.shields.io/badge/Pig-3.2-success.svg" alt="Build Status">
+ <img src="https://img.shields.io/badge/Pig-3.3-success.svg" alt="Build Status">
  <img src="https://img.shields.io/badge/Spring%20Cloud-2020-blue.svg" alt="Coverage Status">
  <img src="https://img.shields.io/badge/Spring%20Boot-2.5-blue.svg" alt="Downloads">
  <img src="https://img.shields.io/github/license/pig-mesh/pig"/>
@@ -15,14 +15,14 @@
 
 ### 核心依赖
 
-| 依赖                   | 版本          |
+| 依赖                   | 版本           |
 | ---------------------- | ------------- |
-| Spring Boot            | 2.5.0 |
-| Spring Cloud           | 2020.0.3    |
-| Spring Cloud Alibaba   | 2021.1|
+| Spring Boot            | 2.5.4         |
+| Spring Cloud           | 2020.0.3      |
+| Spring Cloud Alibaba   | 2021.1        |
 | Spring Security OAuth2 | 2.3.6         |
-| Mybatis Plus           | 3.4.3         |
-| hutool                 | 5.6.6         |
+| Mybatis Plus           | 3.4.3.2         |
+| hutool                 | 5.7.9         |
 | Avue                   | 2.6.18        |
 
 ### 模块说明
@@ -33,6 +33,7 @@ pig-ui  -- https://gitee.com/log4j/pig-ui
 pig
 ├── pig-auth -- 授权服务提供[3000]
 └── pig-common -- 系统公共模块
+     ├── pig-common-bom -- 全局依赖管理控制
      ├── pig-common-core -- 公共工具类核心包
      ├── pig-common-datasource -- 动态数据源包
      ├── pig-common-job -- xxl-job 封装
@@ -98,7 +99,7 @@ mvn archetype:generate \
        -Dpackage=com.pig4cloud.pig.demo \
        -DarchetypeGroupId=com.pig4cloud.archetype \
        -DarchetypeArtifactId=pig-gen \
-       -DarchetypeVersion=3.2.0 \
+       -DarchetypeVersion=3.3.2 \
        -DarchetypeCatalog=local
 ```
 
@@ -117,7 +118,8 @@ mvn archetype:generate \
 
 ## 微信群 [禁广告]
 
-![](https://gitee.com/pig4cloud/oss/raw/master/2020-9/20200901133142.png)
+![1628762721](https://minio.pigx.vip/oss/1628762721.png)
+
 
 ## 开源共建
 

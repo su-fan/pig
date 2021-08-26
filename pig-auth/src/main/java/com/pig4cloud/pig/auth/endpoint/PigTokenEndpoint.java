@@ -22,6 +22,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.pig4cloud.pig.common.core.constant.CacheConstants;
 import com.pig4cloud.pig.common.core.constant.CommonConstants;
 import com.pig4cloud.pig.common.core.util.R;
+import com.pig4cloud.pig.common.core.util.SpringContextHolder;
 import com.pig4cloud.pig.common.security.annotation.Inner;
 import com.pig4cloud.pig.common.security.util.SecurityUtils;
 import lombok.RequiredArgsConstructor;
@@ -35,6 +36,7 @@ import org.springframework.data.redis.serializer.JdkSerializationRedisSerializer
 import org.springframework.data.redis.serializer.RedisSerializer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 import org.springframework.http.HttpHeaders;
+import org.springframework.security.authentication.event.LogoutSuccessEvent;
 import org.springframework.security.oauth2.common.OAuth2AccessToken;
 import org.springframework.security.oauth2.common.OAuth2RefreshToken;
 import org.springframework.security.oauth2.provider.AuthorizationRequest;
@@ -50,6 +52,8 @@ import javax.servlet.http.HttpSession;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * @author lengleng
@@ -142,6 +146,9 @@ public class PigTokenEndpoint {
 		// 清空 refresh token
 		OAuth2RefreshToken refreshToken = accessToken.getRefreshToken();
 		tokenStore.removeRefreshToken(refreshToken);
+
+		// 处理自定义退出事件，保存相关日志
+		SpringContextHolder.publishEvent(new LogoutSuccessEvent(auth2Authentication));
 		return R.ok();
 	}
 
@@ -155,49 +162,14 @@ public class PigTokenEndpoint {
 	public R<Page> tokenList(@RequestBody Map<String, Object> params) {
 		// 根据分页参数获取对应数据
 		String key = String.format("%sauth_to_access:*", CacheConstants.PROJECT_OAUTH_ACCESS);
-		List<String> pages = findKeysForPage(key, MapUtil.getInt(params, CommonConstants.CURRENT),
-				MapUtil.getInt(params, CommonConstants.SIZE));
-
-		redisTemplate.setKeySerializer(new StringRedisSerializer());
-		redisTemplate.setValueSerializer(new JdkSerializationRedisSerializer());
-		Page result = new Page(MapUtil.getInt(params, CommonConstants.CURRENT),
-				MapUtil.getInt(params, CommonConstants.SIZE));
+		int current = MapUtil.getInt(params, CommonConstants.CURRENT);
+		int size = MapUtil.getInt(params, CommonConstants.SIZE);
+		Set<String> keys = redisTemplate.keys(key);
+		List<String> pages = keys.stream().skip((current - 1) * size).limit(size).collect(Collectors.toList());
+		Page result = new Page(current, size);
 		result.setRecords(redisTemplate.opsForValue().multiGet(pages));
-		result.setTotal(redisTemplate.keys(key).size());
+		result.setTotal(keys.size());
 		return R.ok(result);
-	}
-
-	private List<String> findKeysForPage(String patternKey, int pageNum, int pageSize) {
-		ScanOptions options = ScanOptions.scanOptions().count(1000L).match(patternKey).build();
-		RedisSerializer<String> redisSerializer = (RedisSerializer<String>) redisTemplate.getKeySerializer();
-		Cursor cursor = (Cursor) redisTemplate.executeWithStickyConnection(
-				redisConnection -> new ConvertingCursor<>(redisConnection.scan(options), redisSerializer::deserialize));
-		List<String> result = new ArrayList<>();
-		int tmpIndex = 0;
-		int startIndex = (pageNum - 1) * pageSize;
-		int end = pageNum * pageSize;
-
-		assert cursor != null;
-		while (cursor.hasNext()) {
-			if (tmpIndex >= startIndex && tmpIndex < end) {
-				result.add(cursor.next().toString());
-				tmpIndex++;
-				continue;
-			}
-			if (tmpIndex >= end) {
-				break;
-			}
-			tmpIndex++;
-			cursor.next();
-		}
-
-		try {
-			cursor.close();
-		}
-		catch (Exception e) {
-			log.error("关闭cursor 失败");
-		}
-		return result;
 	}
 
 }

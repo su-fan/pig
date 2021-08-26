@@ -20,6 +20,7 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.lang.tree.Tree;
 import cn.hutool.core.lang.tree.TreeNode;
 import cn.hutool.core.lang.tree.TreeUtil;
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.pig4cloud.pig.admin.api.entity.SysMenu;
@@ -31,13 +32,13 @@ import com.pig4cloud.pig.common.core.constant.CacheConstants;
 import com.pig4cloud.pig.common.core.constant.CommonConstants;
 import com.pig4cloud.pig.common.core.constant.enums.MenuTypeEnum;
 import lombok.RequiredArgsConstructor;
-import org.jetbrains.annotations.NotNull;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
 
+import javax.validation.constraints.NotNull;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -60,9 +61,9 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu> impl
 	private final SysRoleMenuMapper sysRoleMenuMapper;
 
 	@Override
-	@Cacheable(value = CacheConstants.MENU_DETAILS, key = "#roleId  + '_menu'", unless = "#result == null")
-	public List<SysMenu> findMenuByRoleId(Integer roleId) {
-		return baseMapper.listMenusByRoleId(roleId);
+	@Cacheable(value = CacheConstants.MENU_DETAILS, key = "#roleIds  + '_menu'", unless = "#result == null")
+	public Set<SysMenu> findMenuByRoleId(String roleIds) {
+		return baseMapper.listMenusByRoleId(roleIds);
 	}
 
 	/**
@@ -125,8 +126,8 @@ public class SysMenuServiceImpl extends ServiceImpl<SysMenuMapper, SysMenu> impl
 	@Override
 	public List<Tree<Integer>> filterMenu(Set<SysMenu> all, Integer parentId) {
 		List<TreeNode<Integer>> collect = all.stream()
-				.filter(menu -> MenuTypeEnum.LEFT_MENU.getType().equals(menu.getType())).map(getNodeFunction())
-				.collect(Collectors.toList());
+				.filter(menu -> MenuTypeEnum.LEFT_MENU.getType().equals(menu.getType()))
+				.filter(menu -> StrUtil.isNotBlank(menu.getPath())).map(getNodeFunction()).collect(Collectors.toList());
 		Integer parent = parentId == null ? CommonConstants.MENU_TREE_ROOT_ID : parentId;
 		return TreeUtil.build(collect, parent);
 	}
